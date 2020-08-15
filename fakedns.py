@@ -4,6 +4,7 @@ import socketserver
 import sys
 from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socket import gethostbyname,gethostname
 
 DNS_HEADER_LENGTH = 12
 # TODO make some DNS database with IPs connected to regexs
@@ -161,7 +162,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b'Hello, world!')
+        self.wfile.write(self.read_html('index.html'))
+    def read_html(self,path):
+        file = open(path,'rb')
+        return file.read()
 
 class threaded_server(Thread):
     PORT = 53
@@ -174,7 +178,7 @@ class threaded_server(Thread):
         self.PORT = args[1]
         self.HANDLER = args[2]
     def run(self):
-        print('\033[36mStarted server on port {}.\033[39m'.format(self.PORT))
+        print('\033[36mStarted server on {}:{}.\033[39m'.format(IP,self.PORT))
         server = self.SERVER_OBJ((self.HOST,self.PORT), self.HANDLER) 
         server.serve_forever()
 
@@ -182,6 +186,9 @@ if __name__ == '__main__':
     # Minimal configuration - allow to pass IP in configuration
     if len(sys.argv) > 1:
         IP = sys.argv[1]
+    else:
+        IP = gethostbyname(gethostname())
+
     dns_server = threaded_server((socketserver.ThreadingUDPServer,53,DNSHandler))
     dns_server.start()
     http_server = threaded_server((HTTPServer,80,SimpleHTTPRequestHandler))
