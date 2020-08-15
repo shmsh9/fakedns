@@ -158,17 +158,30 @@ class DNSHandler(socketserver.BaseRequestHandler):
             records += record
         return records
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    #hardcoded values for which folder is allowed being served and homepage name
+    FOLDER = './res'
+    HOME = 'index.html'
 
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html')
+        self.end_headers()
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(self.read_html('index.html'))
+        print(self.path)
+        try:
+            self.wfile.write(self.read_html('{}{}'.format(self.FOLDER,self.path)))
+        except:
+            self.send_home()
     def read_html(self,path):
         file = open(path,'rb')
         return file.read()
+    def send_home(self):
+        self.wfile.write(self.read_html('{}/{}'.format(self.FOLDER,self.HOME)))
 
 class threaded_server(Thread):
-    PORT = 53
+    PORT = ''
     HOST = ''
     SERVER_OBJ = ''
     HANDLER = ''
